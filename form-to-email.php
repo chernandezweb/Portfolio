@@ -1,66 +1,52 @@
+
 <?php
-if(!isset($_POST['submit']))
+$errors = '';
+$myemail = 'chernandezweb@gmail.com';//<-----Put Your email address here.
+if(empty($_POST['name'])  ||
+   empty($_POST['email']) ||
+   empty($_POST['message']))
 {
-    //This page should not be accessed directly. Need to submit the form.
-    echo "error; you need to submit the form!";
+    $errors .= "\n Error: all fields are required";
 }
+
 $name = $_POST['name'];
-$visitor_email = $_POST['email'];
-$subject = $_POST['subject'];
+$email_address = $_POST['email'];
 $message = $_POST['message'];
 
-//Validate first
-if(empty($name)||empty($visitor_email))
+if (!preg_match(
+"/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/i",
+$email_address))
 {
-    echo "Name and email are mandatory!";
-    exit;
+    $errors .= "\n Error: Invalid email address";
 }
 
-if(IsInjected($visitor_email))
+if( empty($errors))
 {
-    echo "Bad email value!";
-    exit;
+	$to = $myemail;
+	$email_subject = "Contact form submission: $name";
+	$email_body = "You have received a new message. ".
+	" Here are the details:\n Name: $name \n Email: $email_address \n Message \n $message";
+
+	$headers = "From: $myemail\n";
+	$headers .= "Reply-To: $email_address";
+
+	mail($to,$email_subject,$email_body,$headers);
+	//redirect to the 'thank you' page
+	header('Location: thank-you.html');
 }
-
-$email_from = 'c-hernandez.com';//<== update the email address
-$email_subject = "New Form submission";
-$email_body = "You have received a new message from the user $name.\n \n".
-    "From: $visitor_email.\n \n".
-    "Subject: $subject.\n \n".
-    "Here is the message:\n $message\n \n";
-    
-   
-
-    $to = "chernandezweb@gmail.com";//<== update the email address
-$headers = "From: $email_from \r\n";
-$headers .= "Reply-To: $visitor_email \r\n";
-//Send the email!
-mail($to,$email_subject,$email_body,$headers);
-//done. redirect to thank-you page.
-header('Location: thank-you.html');
-
-
-// Function to validate against any email injection attempts
-function IsInjected($str)
-{
-    $injections = array('(\n+)',
-        '(\r+)',
-        '(\t+)',
-        '(%0A+)',
-        '(%0D+)',
-        '(%08+)',
-        '(%09+)'
-    );
-    $inject = join('|', $injections);
-    $inject = "/$inject/i";
-    if(preg_match($inject,$str))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
 ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Contact form handler</title>
+</head>
+
+<body>
+<!-- This page is displayed only if there is some error -->
+<?php
+echo nl2br($errors);
+?>
+
+
+</body>
+</html>
